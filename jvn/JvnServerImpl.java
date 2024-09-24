@@ -9,9 +9,12 @@
 
 package jvn;
 
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.io.*;
-
+import java.util.HashMap;
 
 
 public class JvnServerImpl 	
@@ -24,6 +27,8 @@ public class JvnServerImpl
 	private static final long serialVersionUID = 1L;
 	// A JVN server is managed as a singleton 
 	private static JvnServerImpl js = null;
+	private HashMap<String, JvnObject> hashMap;
+    JvnRemoteCoord remoteCoord;
 
   /**
   * Default constructor
@@ -31,7 +36,14 @@ public class JvnServerImpl
   **/
 	private JvnServerImpl() throws Exception {
 		super();
-		// to be completed
+		hashMap = new HashMap<>();
+		try {
+            Registry registry = LocateRegistry.getRegistry("localhost", 1099);
+			remoteCoord = (JvnRemoteCoord) registry.lookup("coordinateurLeonard");
+		} catch (Exception e)
+		{
+			throw new RuntimeException(e);
+        }
 	}
 	
   /**
@@ -55,9 +67,13 @@ public class JvnServerImpl
 	* @throws JvnException
 	**/
 	public  void jvnTerminate()
-	throws jvn.JvnException {
-    // to be completed 
-	} 
+	throws JvnException {
+		try {
+			remoteCoord.jvnTerminate((JvnRemoteServer) this);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
 	
 	/**
 	* creation of a JVN object
@@ -65,9 +81,8 @@ public class JvnServerImpl
 	* @throws JvnException
 	**/
 	public  JvnObject jvnCreateObject(Serializable o)
-	throws jvn.JvnException { 
-		// to be completed 
-		return null; 
+	throws JvnException {
+		return (JvnObject) o;
 	}
 	
 	/**
@@ -77,8 +92,8 @@ public class JvnServerImpl
 	* @throws JvnException
 	**/
 	public  void jvnRegisterObject(String jon, JvnObject jo)
-	throws jvn.JvnException {
-		// to be completed 
+	throws JvnException {
+		hashMap.put(jon, jo);
 	}
 	
 	/**
@@ -88,9 +103,8 @@ public class JvnServerImpl
 	* @throws JvnException
 	**/
 	public  JvnObject jvnLookupObject(String jon)
-	throws jvn.JvnException {
-    // to be completed 
-		return null;
+	throws JvnException {
+		return hashMap.get(jon);
 	}	
 	
 	/**
@@ -101,10 +115,12 @@ public class JvnServerImpl
 	**/
    public Serializable jvnLockRead(int joi)
 	 throws JvnException {
-		// to be completed 
-		return null;
-
-	}	
+	   try {
+		   return remoteCoord.jvnLockRead(joi, this);
+	   } catch (RemoteException e) {
+		   throw new RuntimeException(e);
+	   }
+   }
 	/**
 	* Get a Write lock on a JVN object 
 	* @param joi : the JVN object identification
@@ -113,10 +129,12 @@ public class JvnServerImpl
 	**/
    public Serializable jvnLockWrite(int joi)
 	 throws JvnException {
-		// to be completed 
-		return null;
-	}	
-
+	   try {
+		   return remoteCoord.jvnLockWrite(joi, this);
+	   } catch (RemoteException e) {
+		   throw new RuntimeException(e);
+	   }
+   }
 	
   /**
 	* Invalidate the Read lock of the JVN object identified by id 
@@ -126,7 +144,7 @@ public class JvnServerImpl
 	* @throws java.rmi.RemoteException,JvnException
 	**/
   public void jvnInvalidateReader(int joi)
-	throws java.rmi.RemoteException,jvn.JvnException {
+	throws java.rmi.RemoteException, JvnException {
 		// to be completed 
 	};
 	    
@@ -137,7 +155,7 @@ public class JvnServerImpl
 	* @throws java.rmi.RemoteException,JvnException
 	**/
   public Serializable jvnInvalidateWriter(int joi)
-	throws java.rmi.RemoteException,jvn.JvnException { 
+	throws java.rmi.RemoteException, JvnException {
 		// to be completed 
 		return null;
 	};
@@ -149,7 +167,7 @@ public class JvnServerImpl
 	* @throws java.rmi.RemoteException,JvnException
 	**/
    public Serializable jvnInvalidateWriterForReader(int joi)
-	 throws java.rmi.RemoteException,jvn.JvnException { 
+	 throws java.rmi.RemoteException, JvnException {
 		// to be completed 
 		return null;
 	 };
