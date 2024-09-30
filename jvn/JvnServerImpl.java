@@ -82,7 +82,12 @@ public class JvnServerImpl
 	**/
 	public  JvnObject jvnCreateObject(Serializable o)
 	throws JvnException {
-		return (JvnObject) o;
+		try {
+			int id = remoteCoord.jvnGetObjectId();
+			return new JvnObjectImpl(id, o, this);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 	
 	/**
