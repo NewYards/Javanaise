@@ -27,7 +27,7 @@ public class JvnServerImpl
 	private static final long serialVersionUID = 1L;
 	// A JVN server is managed as a singleton 
 	private static JvnServerImpl js = null;
-	private HashMap<String, JvnObject> hashMap;
+	private HashMap<int, JvnObject> hashMap;
     JvnRemoteCoord remoteCoord;
 
   /**
@@ -96,7 +96,7 @@ public class JvnServerImpl
 	* @param jo : the JVN object 
 	* @throws JvnException
 	**/
-	public  void jvnRegisterObject(String jon, JvnObject jo)
+	public void jvnRegisterObject(String jon, JvnObject jo)
 	throws JvnException {
 		hashMap.put(jon, jo);
 	}
@@ -150,7 +150,7 @@ public class JvnServerImpl
 	**/
   public void jvnInvalidateReader(int joi)
 	throws java.rmi.RemoteException, JvnException {
-		// to be completed 
+		hashMap.get(joi).jvnInvalidateReader();
 	};
 	    
 	/**

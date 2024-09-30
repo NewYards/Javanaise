@@ -11,7 +11,18 @@ package jvn;
 
 import java.rmi.server.UnicastRemoteObject;
 import java.io.Serializable;
+import java.util.HashMap;
 
+
+class refObject{
+    JvnObject o;
+    JvnRemoteServer writer;
+    JvnRemoteServer[] readers;
+
+    public refObject(JvnObject o){
+        this.o = o;
+    }
+}
 
 public class JvnCoordImpl 	
               extends UnicastRemoteObject 
@@ -22,13 +33,17 @@ public class JvnCoordImpl
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-
+    private HashMap<Integer, refObject> objects;
+    private HashMap<String, Integer> ids;
+    private HashMap<JvnRemoteServer, int[]> locks;
 /**
   * Default constructor
   * @throws JvnException
   **/
 	private JvnCoordImpl() throws Exception {
-		// to be completed
+		objects = new HashMap<>();
+        ids = new HashMap<>();
+        locks = new HashMap<>();
 	}
 
   /**
@@ -52,7 +67,10 @@ public class JvnCoordImpl
   **/
   public void jvnRegisterObject(String jon, JvnObject jo, JvnRemoteServer js)
   throws java.rmi.RemoteException,jvn.JvnException{
-    // to be completed 
+      refObject ref = new refObject(jo);
+      int id = jo.jvnGetObjectId();
+      ids.put(jon, id);
+      objects.put(id, ref);
   }
   
   /**
@@ -63,8 +81,7 @@ public class JvnCoordImpl
   **/
   public JvnObject jvnLookupObject(String jon, JvnRemoteServer js)
   throws java.rmi.RemoteException,jvn.JvnException{
-    // to be completed 
-    return null;
+    return objects.get(ids.get(jon)).o;
   }
   
   /**
