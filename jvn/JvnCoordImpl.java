@@ -11,16 +11,19 @@ package jvn;
 
 import java.rmi.server.UnicastRemoteObject;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 
 class refObject{
     JvnObject o;
     JvnRemoteServer writer;
-    JvnRemoteServer[] readers;
+    ArrayList<JvnRemoteServer> readers;
 
     public refObject(JvnObject o){
         this.o = o;
+        writer = null;
+        readers = new ArrayList<JvnRemoteServer>();
     }
 }
 
@@ -35,7 +38,8 @@ public class JvnCoordImpl
 	private static final long serialVersionUID = 1L;
     private HashMap<Integer, refObject> objects;
     private HashMap<String, Integer> ids;
-    private HashMap<JvnRemoteServer, int[]> locks;
+    private HashMap<JvnRemoteServer, ArrayList<Integer>> locks;
+    private int current_id = 0;
 /**
   * Default constructor
   * @throws JvnException
@@ -53,8 +57,8 @@ public class JvnCoordImpl
   **/
   public int jvnGetObjectId()
   throws java.rmi.RemoteException,jvn.JvnException {
-    // to be completed 
-    return 0;
+    current_id++;
+    return current_id-1;
   }
   
   /**
@@ -93,7 +97,14 @@ public class JvnCoordImpl
   **/
    public Serializable jvnLockRead(int joi, JvnRemoteServer js)
    throws java.rmi.RemoteException, JvnException{
-    // to be completed
+    if(locks.containsKey(js))
+    {
+        locks.get(js), new ArrayList<Integer>(joi));
+    }
+    else
+    {
+        locks.put(js, new ArrayList<Integer>(joi));
+    }
     return null;
    }
 
@@ -117,7 +128,11 @@ public class JvnCoordImpl
 	**/
     public void jvnTerminate(JvnRemoteServer js)
 	 throws java.rmi.RemoteException, JvnException {
-	 // to be completed
+        for (int id : locks.get(js)) {
+            refObject ref = objects.get(id);
+            if(ref.writer == js) ref.writer = null;
+            ref.readers.remove(js);
+        }
     }
 }
 

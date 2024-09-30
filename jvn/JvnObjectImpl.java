@@ -17,6 +17,11 @@ public class JvnObjectImpl implements JvnObject{
 
     @Override
     public void jvnLockRead() throws JvnException {
+        if(this.state == STATE.RC || this.state == STATE.R)
+        {
+            this.state = STATE.R;
+            return;
+        }
         try {
             this.o = remoteServer.jvnLockRead(this.id);
         } catch (Exception e) {

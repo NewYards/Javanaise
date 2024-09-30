@@ -27,7 +27,7 @@ public class JvnServerImpl
 	private static final long serialVersionUID = 1L;
 	// A JVN server is managed as a singleton 
 	private static JvnServerImpl js = null;
-	private HashMap<int, JvnObject> hashMap;
+	private HashMap<Integer, JvnObject> hashMap;
     JvnRemoteCoord remoteCoord;
 
   /**
@@ -36,7 +36,7 @@ public class JvnServerImpl
   **/
 	private JvnServerImpl() throws Exception {
 		super();
-		hashMap = new HashMap<>();
+		hashMap = new HashMap<Integer, JvnObject>();
 		try {
             Registry registry = LocateRegistry.getRegistry("localhost", 1099);
 			remoteCoord = (JvnRemoteCoord) registry.lookup("coordinateurLeonard");
@@ -98,7 +98,11 @@ public class JvnServerImpl
 	**/
 	public void jvnRegisterObject(String jon, JvnObject jo)
 	throws JvnException {
-		hashMap.put(jon, jo);
+		try{
+			remoteCoord.jvnRegisterObject(jon, jo, this);
+		}catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 	
 	/**
@@ -109,7 +113,11 @@ public class JvnServerImpl
 	**/
 	public  JvnObject jvnLookupObject(String jon)
 	throws JvnException {
-		return hashMap.get(jon);
+		try{
+			return remoteCoord.jvnLookupObject(jon, this);
+		}catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}	
 	
 	/**
@@ -161,8 +169,7 @@ public class JvnServerImpl
 	**/
   public Serializable jvnInvalidateWriter(int joi)
 	throws java.rmi.RemoteException, JvnException {
-		// to be completed 
-		return null;
+	  return hashMap.get(joi).jvnInvalidateWriter();
 	};
 	
 	/**
@@ -173,8 +180,7 @@ public class JvnServerImpl
 	**/
    public Serializable jvnInvalidateWriterForReader(int joi)
 	 throws java.rmi.RemoteException, JvnException {
-		// to be completed 
-		return null;
+	   return hashMap.get(joi).jvnInvalidateWriterForReader();
 	 };
 
 }
