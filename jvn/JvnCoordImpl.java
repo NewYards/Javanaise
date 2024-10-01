@@ -97,15 +97,16 @@ public class JvnCoordImpl
   **/
    public Serializable jvnLockRead(int joi, JvnRemoteServer js)
    throws java.rmi.RemoteException, JvnException{
-    if(locks.containsKey(js))
+    if(!locks.containsKey(js)) locks.put(js, new ArrayList<Integer>());
+    if(!(objects.get(joi).writer == null))
     {
-        locks.get(js), new ArrayList<Integer>(joi));
+        objects.get(joi).writer.jvnInvalidateWriterForReader(joi);
+        if(!objects.get(joi).readers.contains(objects.get(joi).writer))objects.get(joi).readers.add(objects.get(joi).writer);
+        objects.get(joi).writer = null;
     }
-    else
-    {
-        locks.put(js, new ArrayList<Integer>(joi));
-    }
-    return null;
+    locks.get(js).add(joi);
+    objects.get(joi).readers.add(js);
+    return objects.get(joi).o;
    }
 
   /**
@@ -117,8 +118,12 @@ public class JvnCoordImpl
   **/
    public Serializable jvnLockWrite(int joi, JvnRemoteServer js)
    throws java.rmi.RemoteException, JvnException{
-    // to be completed
-    return null;
+    if((objects.get(joi).writer == null)) objects.get(joi).writer.jvnInvalidateWriter(joi);
+    objects.get(joi).readers.remove(js);
+    for(JvnRemoteServer reader : objects.get(joi).readers) reader.jvnInvalidateReader(joi);
+    objects.get(joi).readers.clear();
+    objects.get(joi).writer = js;
+    return objects.get(joi).o;
    }
 
 	/**

@@ -22,6 +22,11 @@ public class JvnObjectImpl implements JvnObject{
             this.state = STATE.R;
             return;
         }
+        if(this.state == STATE.WC)
+        {
+            this.state = STATE.RWC;
+            return;
+        }
         try {
             this.o = remoteServer.jvnLockRead(this.id);
         } catch (Exception e) {
