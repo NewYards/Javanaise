@@ -9,6 +9,7 @@
 
 package jvn;
 
+import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -19,7 +20,7 @@ import java.util.HashMap;
 
 public class JvnServerImpl 	
               extends UnicastRemoteObject 
-							implements JvnLocalServer, JvnRemoteServer{ 
+							implements JvnLocalServer, JvnRemoteServer {
 	
   /**
 	 * 
@@ -82,9 +83,13 @@ public class JvnServerImpl
 	**/
 	public  JvnObject jvnCreateObject(Serializable o)
 	throws JvnException {
+		System.out.println(o);
 		try {
 			int id = remoteCoord.jvnGetObjectId();
-			return new JvnObjectImpl(id, o, this);
+			JvnObjectImpl object = new JvnObjectImpl(id, o, this);
+			object.state = STATE.W;
+			object.lock.lock();
+			return object;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

@@ -9,6 +9,8 @@
 
 package jvn;
 
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -20,9 +22,9 @@ class refObject{
     JvnRemoteServer writer;
     ArrayList<JvnRemoteServer> readers;
 
-    public refObject(JvnObject o){
+    public refObject(JvnObject o, JvnRemoteServer js){
         this.o = o;
-        writer = null;
+        writer = js;
         readers = new ArrayList<JvnRemoteServer>();
     }
 }
@@ -40,14 +42,18 @@ public class JvnCoordImpl
     private HashMap<String, Integer> ids;
     private HashMap<JvnRemoteServer, ArrayList<Integer>> locks;
     private int current_id = 0;
+    private Registry registry;
 /**
   * Default constructor
   * @throws JvnException
   **/
-	private JvnCoordImpl() throws Exception {
+JvnCoordImpl() throws Exception {
 		objects = new HashMap<>();
         ids = new HashMap<>();
         locks = new HashMap<>();
+
+        this.registry = LocateRegistry.createRegistry(1099);
+        registry.bind("coordinateurLeonard", this);
 	}
 
   /**
@@ -71,7 +77,7 @@ public class JvnCoordImpl
   **/
   public void jvnRegisterObject(String jon, JvnObject jo, JvnRemoteServer js)
   throws java.rmi.RemoteException,jvn.JvnException{
-      refObject ref = new refObject(jo);
+      refObject ref = new refObject(jo, js);
       int id = jo.jvnGetObjectId();
       ids.put(jon, id);
       objects.put(id, ref);
@@ -85,6 +91,7 @@ public class JvnCoordImpl
   **/
   public JvnObject jvnLookupObject(String jon, JvnRemoteServer js)
   throws java.rmi.RemoteException,jvn.JvnException{
+      if(objects.get(ids.get(jon)) == null) return null;
     return objects.get(ids.get(jon)).o;
   }
   
@@ -106,7 +113,7 @@ public class JvnCoordImpl
     }
     locks.get(js).add(joi);
     objects.get(joi).readers.add(js);
-    return objects.get(joi).o;
+    return objects.get(joi).o.jvnGetSharedObject();
    }
 
   /**
@@ -118,12 +125,13 @@ public class JvnCoordImpl
   **/
    public Serializable jvnLockWrite(int joi, JvnRemoteServer js)
    throws java.rmi.RemoteException, JvnException{
-    if((objects.get(joi).writer == null)) objects.get(joi).writer.jvnInvalidateWriter(joi);
+
+    if((objects.get(joi).writer == null)) objects.get(joi).o.setObject(objects.get(joi).writer.jvnInvalidateWriter(joi));
     objects.get(joi).readers.remove(js);
     for(JvnRemoteServer reader : objects.get(joi).readers) reader.jvnInvalidateReader(joi);
     objects.get(joi).readers.clear();
     objects.get(joi).writer = js;
-    return objects.get(joi).o;
+    return objects.get(joi).o.jvnGetSharedObject();
    }
 
 	/**

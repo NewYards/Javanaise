@@ -18,6 +18,8 @@ public interface JvnObject extends Serializable {
 	/* A JvnObject should be serializable in order to be able to transfer 
        a reference to a JVN object remotely */
 
+	public void setObject(Serializable o);
+
 	/**
 	* Get a Read lock on the shared object 
 	* @throws JvnException
