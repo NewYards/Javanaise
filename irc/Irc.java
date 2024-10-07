@@ -131,8 +131,6 @@ public class Irc {
 		irc.sentence.jvnLockWrite();
 		
 		// invoke the method
-		   System.out.println(irc.sentence.jvnGetSharedObject());
-		   System.out.println(irc.sentence);
 		((Sentence)(irc.sentence.jvnGetSharedObject())).write(s);
 		
 		// unlock the object
