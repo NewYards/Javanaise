@@ -39,7 +39,7 @@ public class JvnServerImpl
 		super();
 		hashMap = new HashMap<Integer, JvnObject>();
 		try {
-            Registry registry = LocateRegistry.getRegistry("localhost", 1099);
+            Registry registry = LocateRegistry.getRegistry("localhost", 20000);
 			remoteCoord = (JvnRemoteCoord) registry.lookup("coordinateurLeonard");
 		} catch (Exception e)
 		{
@@ -83,7 +83,6 @@ public class JvnServerImpl
 	**/
 	public  JvnObject jvnCreateObject(Serializable o)
 	throws JvnException {
-		System.out.println(o);
 		try {
 			int id = remoteCoord.jvnGetObjectId();
 			JvnObjectImpl object = new JvnObjectImpl(id, o, this);
@@ -119,7 +118,11 @@ public class JvnServerImpl
 	public  JvnObject jvnLookupObject(String jon)
 	throws JvnException {
 		try{
-			return remoteCoord.jvnLookupObject(jon, this);
+			JvnObject jo = remoteCoord.jvnLookupObject(jon, this);
+			if(jo==null) return null;
+			JvnObjectImpl object = new JvnObjectImpl(jo.jvnGetObjectId(), jo.jvnGetSharedObject(), this);
+			hashMap.put(jo.jvnGetObjectId(), object);
+			return object;
 		}catch (Exception e) {
 			throw new RuntimeException(e);
 		}

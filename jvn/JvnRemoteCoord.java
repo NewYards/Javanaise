@@ -30,8 +30,7 @@ public interface JvnRemoteCoord extends Remote {
 	/**
 	* Associate a symbolic name with a JVN object
 	* @param jon : the JVN object name
-	* @param jo  : the JVN object 
-	* @param joi : the JVN object identification
+	* @param jo  : the JVN object
 	* @param js  : the remote reference of the JVNServer
 	* @throws java.rmi.RemoteException,JvnException
 	**/

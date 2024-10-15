@@ -13,9 +13,7 @@ public class JvnObjectImpl implements JvnObject{
 
     public JvnObjectImpl(int id, Serializable o, JvnLocalServer remoteServer){
         this.id = id;
-        System.out.println(o);
         this.o = o;
-        System.out.println(this.o);
         this.remoteServer = remoteServer;
         this.state = STATE.NL;
         this.lock = new ReentrantLock();
@@ -24,9 +22,7 @@ public class JvnObjectImpl implements JvnObject{
     @Override
     public void setObject(Serializable o)
     {
-        System.out.println(this.o);
         this.o = o;
-        System.out.println(this.o);
     }
 
     @Override
@@ -42,6 +38,7 @@ public class JvnObjectImpl implements JvnObject{
             this.state = STATE.RWC;
             return;
         }
+        if(this.state == STATE.NL) this.state = STATE.R;
         this.o = remoteServer.jvnLockRead(this.id);
     }
 
@@ -49,6 +46,7 @@ public class JvnObjectImpl implements JvnObject{
     public void jvnLockWrite() throws JvnException {
         lock.lock();
         this.o = remoteServer.jvnLockWrite(this.id);
+        this.state = STATE.W;
     }
 
     @Override
@@ -90,7 +88,7 @@ public class JvnObjectImpl implements JvnObject{
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        if (this.state == STATE.W) {
+        if (this.state == STATE.W || this.state == STATE.WC) {
             this.state = STATE.NL;
         }
         return this.o;
@@ -103,7 +101,7 @@ public class JvnObjectImpl implements JvnObject{
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        if (this.state == STATE.W) {
+        if (this.state == STATE.W || this.state == STATE.WC) {
             this.state = STATE.RC;
         }
         if (this.state == STATE.RWC) {

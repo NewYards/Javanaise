@@ -52,7 +52,7 @@ JvnCoordImpl() throws Exception {
         ids = new HashMap<>();
         locks = new HashMap<>();
 
-        this.registry = LocateRegistry.createRegistry(1099);
+        this.registry = LocateRegistry.createRegistry(20000);
         registry.bind("coordinateurLeonard", this);
 	}
 
@@ -70,8 +70,7 @@ JvnCoordImpl() throws Exception {
   /**
   * Associate a symbolic name with a JVN object
   * @param jon : the JVN object name
-  * @param jo  : the JVN object 
-  * @param joi : the JVN object identification
+  * @param jo  : the JVN object
   * @param js  : the remote reference of the JVNServer
   * @throws java.rmi.RemoteException,JvnException
   **/
@@ -107,7 +106,7 @@ JvnCoordImpl() throws Exception {
     if(!locks.containsKey(js)) locks.put(js, new ArrayList<Integer>());
     if(!(objects.get(joi).writer == null))
     {
-        objects.get(joi).writer.jvnInvalidateWriterForReader(joi);
+        objects.get(joi).o.setObject(objects.get(joi).writer.jvnInvalidateWriterForReader(joi));
         if(!objects.get(joi).readers.contains(objects.get(joi).writer))objects.get(joi).readers.add(objects.get(joi).writer);
         objects.get(joi).writer = null;
     }
