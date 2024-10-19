@@ -1,22 +1,23 @@
 package jvn;
 
 import java.io.Serializable;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+//import java.util.concurrent.locks.Lock;
+//import java.util.concurrent.locks.ReentrantLock;
 
 public class JvnObjectImpl implements JvnObject{
     int id;
     Serializable o;
     transient JvnLocalServer remoteServer;
     STATE state;
-    Lock lock;
+    boolean isLockWrite;
+//    Lock lock;
 
     public JvnObjectImpl(int id, Serializable o, JvnLocalServer remoteServer){
         this.id = id;
         this.o = o;
         this.remoteServer = remoteServer;
         this.state = STATE.NL;
-        this.lock = new ReentrantLock();
+//        this.lock = new ReentrantLock();
     }
 
     @Override
@@ -26,8 +27,14 @@ public class JvnObjectImpl implements JvnObject{
     }
 
     @Override
-    public void jvnLockRead() throws JvnException {
-        lock.lock();
+    public synchronized void jvnLockRead() throws JvnException {
+        while (isLockWrite){
+            try {
+                wait();
+            }catch(InterruptedException e){
+                throw new JvnException(e.getMessage());
+            }
+        }
         if(this.state == STATE.RC || this.state == STATE.R)
         {
             this.state = STATE.R;
@@ -43,17 +50,34 @@ public class JvnObjectImpl implements JvnObject{
     }
 
     @Override
-    public void jvnLockWrite() throws JvnException {
-        lock.lock();
-        this.o = remoteServer.jvnLockWrite(this.id);
+    public synchronized void jvnLockWrite() throws JvnException {
+        while (isLockWrite){
+            try {
+                wait();
+            }catch(InterruptedException e){
+                throw new JvnException(e.getMessage());
+            }
+        }
+        if(this.state != STATE.WC){
+            this.o = remoteServer.jvnLockWrite(this.id);
+        }
+        isLockWrite = true;
         this.state = STATE.W;
     }
 
     @Override
-    public void jvnUnLock() throws JvnException {
-        if(STATE.W == this.state) this.state = STATE.WC;
-        if(STATE.R == this.state) this.state = STATE.RC;
-        lock.unlock();
+    public synchronized void jvnUnLock() throws JvnException {
+        if(STATE.W == this.state) {
+            this.state = STATE.WC;
+            isLockWrite = false;
+            notifyAll();
+        }
+        if(STATE.R == this.state) {
+            this.state = STATE.RC;
+//            isLockWrite = false;
+            notifyAll();
+        }
+//        lock.unlock();
     }
 
     @Override
@@ -67,11 +91,13 @@ public class JvnObjectImpl implements JvnObject{
     }
 
     @Override
-    public void jvnInvalidateReader() throws JvnException {
-        try {
-            lock.wait();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+    public synchronized void jvnInvalidateReader() throws JvnException {
+        while(isLockWrite){
+            try {
+                wait();
+            }catch(InterruptedException e){
+                throw new JvnException(e.getMessage());
+            }
         }
         if (this.state == STATE.R) {
             this.state = STATE.NL;
@@ -82,11 +108,13 @@ public class JvnObjectImpl implements JvnObject{
     }
 
     @Override
-    public Serializable jvnInvalidateWriter() throws JvnException {
-        try {
-            lock.wait();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+    public synchronized Serializable jvnInvalidateWriter() throws JvnException {
+        while(isLockWrite){
+            try {
+                wait();
+            }catch(InterruptedException e){
+                throw new JvnException(e.getMessage());
+            }
         }
         if (this.state == STATE.W || this.state == STATE.WC) {
             this.state = STATE.NL;
@@ -95,12 +123,24 @@ public class JvnObjectImpl implements JvnObject{
     }
 
     @Override
-    public Serializable jvnInvalidateWriterForReader() throws JvnException {
-        try {
-            lock.wait();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+    public synchronized Serializable jvnInvalidateWriterForReader() throws JvnException {
+//        try {
+//            lock.wait();
+//        } catch (InterruptedException e) {
+//            throw new RuntimeException(e);
+//        }
+        while(isLockWrite){
+            try {
+                wait();
+            }catch(InterruptedException e){
+                throw new JvnException(e.getMessage());
+            }
         }
+//        try {
+//            wait();
+//        }catch(InterruptedException e){
+//            throw new JvnException(e.getMessage());
+//        }
         if (this.state == STATE.W || this.state == STATE.WC) {
             this.state = STATE.RC;
         }

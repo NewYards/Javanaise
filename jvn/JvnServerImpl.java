@@ -86,8 +86,11 @@ public class JvnServerImpl
 		try {
 			int id = remoteCoord.jvnGetObjectId();
 			JvnObjectImpl object = new JvnObjectImpl(id, o, this);
+
 			object.state = STATE.W;
-			object.lock.lock();
+//			object.lock.lock();
+			object.isLockWrite = true;
+			hashMap.put(id, object);
 			return object;
 		} catch (Exception e) {
 			throw new RuntimeException(e);

@@ -125,7 +125,7 @@ JvnCoordImpl() throws Exception {
    public Serializable jvnLockWrite(int joi, JvnRemoteServer js)
    throws java.rmi.RemoteException, JvnException{
 
-    if((objects.get(joi).writer == null)) objects.get(joi).o.setObject(objects.get(joi).writer.jvnInvalidateWriter(joi));
+    if(objects.get(joi).writer != null) objects.get(joi).o.setObject(objects.get(joi).writer.jvnInvalidateWriter(joi));
     objects.get(joi).readers.remove(js);
     for(JvnRemoteServer reader : objects.get(joi).readers) reader.jvnInvalidateReader(joi);
     objects.get(joi).readers.clear();
