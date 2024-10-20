@@ -9,7 +9,6 @@
 
 package jvn;
 
-import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -103,8 +102,8 @@ public class JvnServerImpl
     /**
      * Associate a symbolic name with a JVN object
      *
-     * @param jon : the JVN object name
-     * @param jo  : the JVN object
+     * @param jon   : the JVN object name
+     * @param proxy : the proxy object
      * @throws JvnException
      **/
     public void jvnRegisterObject(String jon, Object proxy)
@@ -182,8 +181,6 @@ public class JvnServerImpl
         hashMap.get(joi).jvnInvalidateReader();
     }
 
-    ;
-
     /**
      * Invalidate the Write lock of the JVN object identified by id
      *
@@ -196,8 +193,6 @@ public class JvnServerImpl
         return hashMap.get(joi).jvnInvalidateWriter();
     }
 
-    ;
-
     /**
      * Reduce the Write lock of the JVN object identified by id
      *
@@ -209,9 +204,6 @@ public class JvnServerImpl
             throws java.rmi.RemoteException, JvnException {
         return hashMap.get(joi).jvnInvalidateWriterForReader();
     }
-
-    ;
-
 }
 
  
