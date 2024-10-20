@@ -29,7 +29,7 @@ public class JvnObjectImpl implements JvnObject {
                 throw new JvnException(e.getMessage());
             }
         }
-        if (this.state == STATE.RC || this.state == STATE.R) {
+        if (this.state == STATE.RWC || this.state == STATE.RC || this.state == STATE.R) {
             this.state = STATE.R;
             return;
         }
@@ -50,7 +50,7 @@ public class JvnObjectImpl implements JvnObject {
                 throw new JvnException(e.getMessage());
             }
         }
-        if (this.state != STATE.WC) {
+        if (this.state != STATE.WC && this.state != STATE.RWC) {
             this.o = remoteServer.jvnLockWrite(this.id);
         }
         this.state = STATE.W;
@@ -58,10 +58,8 @@ public class JvnObjectImpl implements JvnObject {
 
     @Override
     public synchronized void jvnUnLock() throws JvnException {
-        if (this.state == STATE.W) {
-            this.state = STATE.WC;
-        }
-        if (STATE.R == this.state) this.state = STATE.RC;
+        if (this.state == STATE.W) this.state = STATE.WC;
+        if (this.state == STATE.R) this.state = STATE.RC;
         notifyAll();
     }
 
