@@ -9,12 +9,14 @@
 
 package jvn;
 
+import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.io.*;
 import java.util.HashMap;
+import java.lang.reflect.Proxy;
 
 
 public class JvnServerImpl
@@ -83,14 +85,16 @@ public class JvnServerImpl
      * @param o : the JVN object state
      * @throws JvnException
      **/
-    public JvnObject jvnCreateObject(Serializable o)
+    public Object jvnCreateObject(Serializable o)
             throws JvnException {
         try {
             int id = remoteCoord.jvnGetObjectId();
             JvnObjectImpl object = new JvnObjectImpl(id, o, this);
+
             object.state = STATE.W;
             hashMap.put(id, object);
-            return object;
+            object.jvnUnLock();
+            return JvnProxy.newInstance(object);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -103,10 +107,11 @@ public class JvnServerImpl
      * @param jo  : the JVN object
      * @throws JvnException
      **/
-    public void jvnRegisterObject(String jon, JvnObject jo)
+    public void jvnRegisterObject(String jon, Object proxy)
             throws JvnException {
         try {
-            remoteCoord.jvnRegisterObject(jon, jo, this);
+            JvnProxy handler = (JvnProxy) Proxy.getInvocationHandler(proxy);
+            remoteCoord.jvnRegisterObject(jon, handler.getJvnObj(), this);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -119,14 +124,14 @@ public class JvnServerImpl
      * @return the JVN object
      * @throws JvnException
      **/
-    public JvnObject jvnLookupObject(String jon)
+    public Object jvnLookupObject(String jon)
             throws JvnException {
         try {
             JvnObject jo = remoteCoord.jvnLookupObject(jon, this);
             if (jo == null) return null;
             JvnObjectImpl object = new JvnObjectImpl(jo.jvnGetObjectId(), jo.jvnGetSharedObject(), this);
             hashMap.put(jo.jvnGetObjectId(), object);
-            return object;
+            return JvnProxy.newInstance(object);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -176,6 +181,9 @@ public class JvnServerImpl
             throws java.rmi.RemoteException, JvnException {
         hashMap.get(joi).jvnInvalidateReader();
     }
+
+    ;
+
     /**
      * Invalidate the Write lock of the JVN object identified by id
      *
@@ -188,6 +196,8 @@ public class JvnServerImpl
         return hashMap.get(joi).jvnInvalidateWriter();
     }
 
+    ;
+
     /**
      * Reduce the Write lock of the JVN object identified by id
      *
@@ -199,6 +209,8 @@ public class JvnServerImpl
             throws java.rmi.RemoteException, JvnException {
         return hashMap.get(joi).jvnInvalidateWriterForReader();
     }
+
+    ;
 
 }
 
