@@ -7,7 +7,6 @@ public class JvnObjectImpl implements JvnObject {
     Serializable o;
     transient JvnLocalServer remoteServer;
     STATE state;
-    boolean isLockWrite;
 
     public JvnObjectImpl(int id, Serializable o, JvnLocalServer remoteServer) {
         this.id = id;
@@ -23,7 +22,7 @@ public class JvnObjectImpl implements JvnObject {
 
     @Override
     public synchronized void jvnLockRead() throws JvnException {
-        while (isLockWrite) {
+        if (this.state == STATE.W) {
             try {
                 wait();
             } catch (InterruptedException e) {
@@ -44,7 +43,7 @@ public class JvnObjectImpl implements JvnObject {
 
     @Override
     public synchronized void jvnLockWrite() throws JvnException {
-        while (isLockWrite) {
+        if (this.state == STATE.W) {
             try {
                 wait();
             } catch (InterruptedException e) {
@@ -54,21 +53,16 @@ public class JvnObjectImpl implements JvnObject {
         if (this.state != STATE.WC) {
             this.o = remoteServer.jvnLockWrite(this.id);
         }
-        isLockWrite = true;
         this.state = STATE.W;
     }
 
     @Override
     public synchronized void jvnUnLock() throws JvnException {
-        if (STATE.W == this.state) {
+        if (this.state == STATE.W) {
             this.state = STATE.WC;
-            isLockWrite = false;
-            notifyAll();
         }
-        if (STATE.R == this.state) {
-            this.state = STATE.RC;
-            notifyAll();
-        }
+        if (STATE.R == this.state) this.state = STATE.RC;
+        notifyAll();
     }
 
     @Override
@@ -83,7 +77,7 @@ public class JvnObjectImpl implements JvnObject {
 
     @Override
     public synchronized void jvnInvalidateReader() throws JvnException {
-        while (isLockWrite) {
+        if (this.state == STATE.W) {
             try {
                 wait();
             } catch (InterruptedException e) {
@@ -100,7 +94,7 @@ public class JvnObjectImpl implements JvnObject {
 
     @Override
     public synchronized Serializable jvnInvalidateWriter() throws JvnException {
-        while (isLockWrite) {
+        if (this.state == STATE.W) {
             try {
                 wait();
             } catch (InterruptedException e) {
@@ -115,7 +109,7 @@ public class JvnObjectImpl implements JvnObject {
 
     @Override
     public synchronized Serializable jvnInvalidateWriterForReader() throws JvnException {
-        while (isLockWrite) {
+        if (this.state == STATE.W) {
             try {
                 wait();
             } catch (InterruptedException e) {

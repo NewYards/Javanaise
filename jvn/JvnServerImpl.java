@@ -89,7 +89,6 @@ public class JvnServerImpl
             int id = remoteCoord.jvnGetObjectId();
             JvnObjectImpl object = new JvnObjectImpl(id, o, this);
             object.state = STATE.W;
-            object.isLockWrite = true;
             hashMap.put(id, object);
             return object;
         } catch (Exception e) {

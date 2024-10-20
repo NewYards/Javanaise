@@ -95,8 +95,9 @@ public class JvnCoordImpl
      **/
     public JvnObject jvnLookupObject(String jon, JvnRemoteServer js)
             throws java.rmi.RemoteException, jvn.JvnException {
-        if (objects.get(ids.get(jon)) == null) return null;
-        return objects.get(ids.get(jon)).o;
+        Integer id = ids.get(jon);
+        if (objects.get(id) == null) return null;
+        return objects.get(id).o;
     }
 
     /**
@@ -109,16 +110,20 @@ public class JvnCoordImpl
      **/
     public Serializable jvnLockRead(int joi, JvnRemoteServer js)
             throws java.rmi.RemoteException, JvnException {
+        // add object to the list of objects that 'js' has a lock on
         if (!locks.containsKey(js)) locks.put(js, new ArrayList<Integer>());
-        if (!(objects.get(joi).writer == null)) {
-            objects.get(joi).o.setObject(objects.get(joi).writer.jvnInvalidateWriterForReader(joi));
-            if (!objects.get(joi).readers.contains(objects.get(joi).writer))
-                objects.get(joi).readers.add(objects.get(joi).writer);
-            objects.get(joi).writer = null;
-        }
         locks.get(js).add(joi);
-        objects.get(joi).readers.add(js);
-        return objects.get(joi).o.jvnGetSharedObject();
+        // check for writer
+        refObject refObj = objects.get(joi);
+        if (!(refObj.writer == null)) {
+            refObj.o.setObject(refObj.writer.jvnInvalidateWriterForReader(joi));
+            if (!refObj.readers.contains(refObj.writer))
+                refObj.readers.add(refObj.writer);
+            refObj.writer = null;
+        }
+        // update readers
+        refObj.readers.add(js);
+        return refObj.o.jvnGetSharedObject();
     }
 
     /**
@@ -131,14 +136,20 @@ public class JvnCoordImpl
      **/
     public Serializable jvnLockWrite(int joi, JvnRemoteServer js)
             throws java.rmi.RemoteException, JvnException {
-
-        if (objects.get(joi).writer != null)
-            objects.get(joi).o.setObject(objects.get(joi).writer.jvnInvalidateWriter(joi));
-        objects.get(joi).readers.remove(js);
-        for (JvnRemoteServer reader : objects.get(joi).readers) reader.jvnInvalidateReader(joi);
-        objects.get(joi).readers.clear();
-        objects.get(joi).writer = js;
-        return objects.get(joi).o.jvnGetSharedObject();
+        // add object to the list of objects that 'js' has a lock on
+        if (!locks.containsKey(js)) locks.put(js, new ArrayList<Integer>());
+        locks.get(js).add(joi);
+        // check for writer
+        refObject refObj = objects.get(joi);
+        if (refObj.writer != null)
+            refObj.o.setObject(refObj.writer.jvnInvalidateWriter(joi));
+        // check for readers
+        refObj.readers.remove(js);
+        for (JvnRemoteServer reader : refObj.readers) reader.jvnInvalidateReader(joi);
+        // update readers and writer
+        refObj.readers.clear();
+        refObj.writer = js;
+        return refObj.o.jvnGetSharedObject();
     }
 
     /**
