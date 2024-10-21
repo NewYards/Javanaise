@@ -22,13 +22,6 @@ public class JvnObjectImpl implements JvnObject {
 
     @Override
     public synchronized void jvnLockRead() throws JvnException {
-        if (this.state == STATE.W) {
-            try {
-                wait();
-            } catch (InterruptedException e) {
-                throw new JvnException(e.getMessage());
-            }
-        }
         if (this.state == STATE.RWC || this.state == STATE.RC || this.state == STATE.R) {
             this.state = STATE.R;
             return;
@@ -43,13 +36,6 @@ public class JvnObjectImpl implements JvnObject {
 
     @Override
     public synchronized void jvnLockWrite() throws JvnException {
-        if (this.state == STATE.W) {
-            try {
-                wait();
-            } catch (InterruptedException e) {
-                throw new JvnException(e.getMessage());
-            }
-        }
         if (this.state != STATE.WC && this.state != STATE.RWC) {
             this.o = remoteServer.jvnLockWrite(this.id);
         }
